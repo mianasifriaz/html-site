@@ -32,6 +32,7 @@ pipeline {
     post {
         success {
             echo '✅ Site deployed successfully.'
+            archiveArtifacts artifacts: '**/*.html, **/*.css, **/*.js', fingerprint: true
         }
         failure {
             echo '❌ Deployment failed.'
