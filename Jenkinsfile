@@ -2,14 +2,6 @@ pipeline {
     agent any
 
     stages {
-        stage('Checkout') {
-            steps {
-                sshagent(credentials: ['html-site-ssh']) {
-                    git url: 'git@github.com:mianasifriaz/html-site.git', branch: 'main'
-                }
-            }
-        }
-
         stage('Deploy') {
             steps {
                 sshagent(credentials: ['html-site-ssh']) {
