@@ -1,6 +1,12 @@
 pipeline {
     agent any
 
+    environment {
+        DEPLOY_USER = 'html-site'
+        DEPLOY_HOST = 'lb-nginx'
+        DEPLOY_DIR = '/home/html-site/public_html'
+    }
+
     stages {
         stage('Checkout') {
             steps {
@@ -8,17 +14,36 @@ pipeline {
             }
         }
 
-        stage('Deploy') {
+        stage('Deploy via SSH') {
             steps {
-                script {
-                    // Use rsync or cp to copy files to /var/www/html-site
+                sshagent (credentials: ['html-site-ssh']) {
                     sh '''
-                        rm -rf /var/www/html-site/*
-                        cp -r * /var/www/html-site/
-                        chown -R www-data:www-data /var/www/html-site
+                    echo "Deploying to $DEPLOY_HOST:$DEPLOY_DIR ..."
+
+                    # Sync all files safely using rsync
+                    rsync -avz \
+                        --exclude=".git/" \
+                        --exclude="README.md" \
+                        --exclude="Jenkinsfile" \
+                        --exclude="awstats/" \
+                        --exclude="awstats-icon/" \
+                        --exclude="awstatsicons/" \
+                        --exclude="icon/" \
+                        ./ $DEPLOY_USER@$DEPLOY_HOST:$DEPLOY_DIR/
+
+                    echo "Deployment completed successfully."
                     '''
                 }
             }
+        }
+    }
+
+    post {
+        failure {
+            echo 'Deployment failed.'
+        }
+        success {
+            echo 'Site deployed successfully.'
         }
     }
 }
